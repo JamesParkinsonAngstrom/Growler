@@ -27,9 +27,9 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          role-to-assume: de-gh-actions-build
           role-session-name: growler-ci-${{ github.run_id }}
-          aws-region: us-east-1
+          aws-region: eu-west-2
 
       - name: Test
         run: pytest -q
