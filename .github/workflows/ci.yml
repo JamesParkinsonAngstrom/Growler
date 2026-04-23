@@ -27,7 +27,7 @@ jobs:
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: de-gh-actions-build
+          role-to-assume: arn:aws:iam::373797717611:role/de-gh-actions-build
           role-session-name: growler-ci-${{ github.run_id }}
           aws-region: eu-west-2
 
