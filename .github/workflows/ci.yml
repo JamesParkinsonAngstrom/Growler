@@ -38,7 +38,7 @@ jobs:
 
   build-and-push:
     if: startsWith(github.ref, 'refs/tags/')
-    runs-on: asf-default
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         lambda: [metadata_entry, record_entry, write_entry]
