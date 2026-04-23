@@ -1,4 +1,6 @@
-# Design Brief: A Parquet Table Format (working title)
+# Design Brief: Growler, A Parquet Table Format 
+
+https://joidesresolution.org/bergy-bits-and-growlers-ice-navigation-in-the-arctic
 
 ## 1. Problem statement
 
