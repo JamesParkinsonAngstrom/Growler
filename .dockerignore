@@ -1,0 +1,11 @@
+.git
+.github
+tests
+**/__pycache__
+**/*.pyc
+.pytest_cache
+.venv
+*.egg-info
+.DS_Store
+design_brief.md
+design _chat.txt
