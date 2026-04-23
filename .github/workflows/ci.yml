@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: '[0-9]*.[0-9]*.[0-9]*'
   pull_request:
 
 permissions:
@@ -11,6 +12,7 @@ permissions:
 
 jobs:
   test:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,3 +35,47 @@ jobs:
 
       - name: Test
         run: pytest -q
+
+  build-and-push:
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        lambda: [metadata_entry, record_entry, write_entry]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/}
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::373797717611:role/de-gh-actions-build
+          role-session-name: growler-build-${{ github.run_id }}
+          aws-region: eu-west-2
+
+      - name: Get ECR registry
+        id: ecr
+        run: |
+          REGISTRY=$(aws ecr describe-repositories --query 'repositories[0].repositoryUri' --output text | cut -d/ -f1)
+          echo "registry=${REGISTRY}" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: aws ecr get-login-password --region eu-west-2 | docker login --username AWS --password-stdin ${{ steps.ecr.registry }}
+
+      - name: Build and push ${{ matrix.lambda }}
+        run: |
+          HANDLER_NAME=$(echo ${{ matrix.lambda }} | sed 's/_entry$//')
+          IMAGE_URI=${{ steps.ecr.registry }}/growler:${HANDLER_NAME}-${{ steps.version.outputs.version }}
+
+          docker build \
+            --build-arg LAMBDA_HANDLER=${{ matrix.lambda }} \
+            -t ${IMAGE_URI} \
+            -t ${{ steps.ecr.registry }}/growler:${HANDLER_NAME}-latest \
+            .
+
+          docker push ${IMAGE_URI}
+          docker push ${{ steps.ecr.registry }}/growler:${HANDLER_NAME}-latest
